@@ -42,7 +42,9 @@
 
         /* Splash Screen */
         .splash-screen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('assets/images/background.png');
+            background-size: cover;
+            background-position: center;
             color: white;
             text-align: center;
         }
@@ -275,10 +277,10 @@
         }
 
         /* Placeholder dinosaur images - replace these with your assets */
-        .dino-1 { background: linear-gradient(45deg, #8B4513, #D2691E), url('assets/images/titanosaurus.webm'); background-size: contain; background-position: center; } /* Titanosaurus */
-        .dino-2 { background: linear-gradient(45deg, #1E90FF, #4682B4), url('assets/images/mosasaurus.png'); background-size: contain; background-position: center; } /* Mosasaurus */
-        .dino-3 { background: linear-gradient(45deg, #9370DB, #8A2BE2), url('assets/images/quetzalcoatlus.webp'); background-size: contain; background-position: center; } /* Quetzalcoatlus */
-        .dino-4 { background: linear-gradient(45deg, #228B22, #32CD32), url('assets/images/trex.png'); background-size: contain; background-position: center; } /* T-Rex */
+        .dino-1 { background-image: url('assets/images/titanosaurus.webp'); }
+        .dino-2 { background-image: url('assets/images/mosasaurus.png'); }
+        .dino-3 { background-image: url('assets/images/quetzalcoatlus.jpeg'); }
+        .dino-4 { background-image: url('assets/images/trex.png'); }
 
         .dinosaur-description {
             font-size: 1.2em;
@@ -329,32 +331,15 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.8);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 2000;
-            flex-direction: column;
         }
 
         .loading.show {
             display: flex;
-        }
-
-        .loading-video {
-            max-width: 80%;
-            max-height: 80%;
-            border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0,245,255,0.5);
-        }
-
-        .loading-text {
-            color: #00f5ff;
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-top: 20px;
-            text-align: center;
-            animation: pulse 1s infinite;
         }
 
         .dna-helix {
@@ -364,11 +349,6 @@
             border-top: 5px solid transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            display: none;
-        }
-
-        .dna-helix.fallback {
-            display: block;
         }
 
         @keyframes spin {
@@ -439,20 +419,7 @@
 
     <!-- Loading Animation -->
     <div class="loading" id="loading">
-        <video 
-            class="loading-video" 
-            id="loadingVideo" 
-            autoplay 
-            muted 
-            playsinline
-            onended="onVideoEnd()"
-            onerror="onVideoError()">
-            <source src="assets/videos/creation-animation.mp4" type="video/mp4">
-            <source src="assets/videos/creation-animation.webm" type="video/webm">
-            Your browser does not support the video tag.
-        </video>
-        <div class="loading-text" id="loadingText">🧬 Creating your dinosaur... 🧬</div>
-        <div class="dna-helix" id="fallbackLoader"></div>
+        <div class="dna-helix"></div>
     </div>
 
     <script>
@@ -463,26 +430,26 @@
         const dinosaurs = [
             {
                 id: 1,
-                name: "Titanosaurus",
-                description: "A colossal giant of the prehistoric world! This massive herbivore towers above all others with its incredible size and gentle nature.",
+                name: "Velocirex",
+                description: "A lightning-fast predator with incredible speed and agility! This dinosaur can outrun almost anything in the prehistoric world.",
                 class: "dino-1"
             },
             {
                 id: 2,
-                name: "Mosasaurus", 
-                description: "The apex predator of ancient seas! This marine reptile ruled the oceans with powerful jaws and incredible swimming speed.",
+                name: "Titanosaurus", 
+                description: "A massive powerhouse with incredible strength! This gentle giant can move mountains with its mighty tail.",
                 class: "dino-2"
             },
             {
                 id: 3,
-                name: "Quetzalcoatlus",
-                description: "The king of the skies! This massive flying reptile soared through prehistoric skies with wings spanning wider than a small airplane.",
+                name: "Cerebrosaur",
+                description: "The smartest dinosaur ever created! With superior intelligence, it can solve complex problems and outsmart any predator.",
                 class: "dino-3"
             },
             {
                 id: 4,
-                name: "Tyrannosaurus Rex",
-                description: "The mighty T-Rex! The most famous predator of all time with bone-crushing jaws and tiny but powerful arms.",
+                name: "Shadowraptor",
+                description: "A master of camouflage and stealth! This mysterious dinosaur can become nearly invisible to hunt its prey.",
                 class: "dino-4"
             }
         ];
@@ -555,55 +522,19 @@
         }
 
         function createDinosaur() {
-            // Show loading with video
+            // Show loading
             document.getElementById('loading').classList.add('show');
             
-            // Reset and play video
-            const video = document.getElementById('loadingVideo');
-            const loadingText = document.getElementById('loadingText');
-            const fallbackLoader = document.getElementById('fallbackLoader');
-            
-            // Show video elements, hide fallback
-            video.style.display = 'block';
-            loadingText.style.display = 'block';
-            fallbackLoader.classList.remove('fallback');
-            
-            // Start video
-            video.currentTime = 0;
-            video.play().catch(() => {
-                // If video fails to play, show fallback loader
-                onVideoError();
-            });
-        }
-
-        function onVideoEnd() {
-            // Video finished playing, show result
-            finishCreation();
-        }
-
-        function onVideoError() {
-            // Video failed to load/play, use fallback loader
-            const video = document.getElementById('loadingVideo');
-            const loadingText = document.getElementById('loadingText');
-            const fallbackLoader = document.getElementById('fallbackLoader');
-            
-            video.style.display = 'none';
-            loadingText.innerHTML = '🧬 Mixing DNA... 🧬';
-            fallbackLoader.classList.add('fallback');
-            
-            // Use timer fallback (3 seconds)
-            setTimeout(finishCreation, 3000);
-        }
-
-        function finishCreation() {
-            // Hide loading
-            document.getElementById('loading').classList.remove('show');
-            
-            // Always succeed - pick random dinosaur (1-4)
-            const randomDinoIndex = Math.floor(Math.random() * 4);
-            const selectedDinosaur = dinosaurs[randomDinoIndex];
-            
-            showResult(selectedDinosaur);
+            setTimeout(() => {
+                // Hide loading
+                document.getElementById('loading').classList.remove('show');
+                
+                // Always succeed - pick random dinosaur (1-4)
+                const randomDinoIndex = Math.floor(Math.random() * 4);
+                const selectedDinosaur = dinosaurs[randomDinoIndex];
+                
+                showResult(selectedDinosaur);
+            }, 3000);
         }
 
         function showResult(dinosaur) {
