@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Lab - Build a Dinosaur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #4facfe 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .screen {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            aspect-ratio: 16/9;
+            max-width: 100vw;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.8s ease;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            transform: translateX(-100%);
+            pointer-events: none;
+        }
+
+        /* Splash Screen */
+        .splash-screen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%), url('assets/images/background.png');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+        }
+
+        .splash-title {
+            font-size: 4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #00f5ff, #0080ff, #40e0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .splash-subtitle {
+            font-size: 1.5em;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .build-button {
+            background: linear-gradient(45deg, #00d4ff, #0080ff);
+            border: none;
+            color: white;
+            padding: 20px 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .build-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.4);
+        }
+
+        /* Game Screen */
+        .game-screen {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .lab-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .lab-title {
+            font-size: 2.5em;
+            color: #00f5ff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+
+        .instruction {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .dna-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .dna-strand {
+            width: 80px;
+            height: 120px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dna-strand:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .dna-strand.dragging {
+            cursor: grabbing;
+            transform: rotate(5deg) scale(1.1);
+            z-index: 1000;
+        }
+
+        .dna-strand::before {
+            content: '🧬';
+            font-size: 2em;
+            position: absolute;
+        }
+
+        .dna-strand.speed { background: linear-gradient(45deg, #ff6b6b, #ee5a24); }
+        .dna-strand.strength { background: linear-gradient(45deg, #4ecdc4, #44a08d); }
+        .dna-strand.intelligence { background: linear-gradient(45deg, #a8edea, #fed6e3); }
+        .dna-strand.stealth { background: linear-gradient(45deg, #667eea, #764ba2); }
+        .dna-strand.size { background: linear-gradient(45deg, #ffecd2, #fcb69f); }
+
+        .lab-chamber {
+            width: 400px;
+            height: 300px;
+            background: rgba(0,0,0,0.3);
+            border: 3px dashed #00f5ff;
+            border-radius: 20px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .lab-chamber.ready {
+            border-color: #00ff00;
+            background: rgba(0,255,0,0.1);
+            box-shadow: 0 0 30px rgba(0,255,0,0.3);
+        }
+
+        .drop-zone {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .dropped-dna {
+            width: 60px;
+            height: 80px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+
+        .create-button {
+            background: linear-gradient(45deg, #00ff00, #32cd32);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .create-button.show {
+            display: block;
+            animation: pulse 1s infinite;
+        }
+
+        .create-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        /* Result Screen */
+        .result-screen {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .result-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            max-width: 500px;
+        }
+
+        .success-message {
+            font-size: 2.5em;
+            color: #00ff00;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out infinite alternate;
+        }
+
+        .failure-message {
+            font-size: 2em;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+        }
+
+        .dinosaur-name {
+            font-size: 3em;
+            background: linear-gradient(45deg, #00f5ff, #0080ff, #40e0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .dinosaur-image {
+            width: 200px;
+            height: 200px;
+            margin: 20px 0;
+            animation: bounce 2s ease-in-out infinite;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 15px;
+        }
+
+        /* Placeholder dinosaur images - replace these with your assets */
+        .dino-1 { background-image: url('assets/images/titanosaurus.png'); }
+        .dino-2 { background-image: url('assets/images/mosasaurus.png'); }
+        .dino-3 { background-image: url('assets/images/quetzalcoatlus.png'); }
+        .dino-4 { background-image: url('assets/images/trex.tif'); }
+
+        .dinosaur-description {
+            font-size: 1.2em;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .play-again-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .play-again-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        /* Animations */
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(0,245,255,0.3); }
+            to { box-shadow: 0 0 20px rgba(0,245,255,0.6); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .dna-helix {
+            width: 100px;
+            height: 100px;
+            border: 5px solid #00f5ff;
+            border-top: 5px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .splash-title { font-size: 2.5em; }
+            .lab-chamber { width: 300px; height: 250px; }
+            .dna-container { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="screen splash-screen" id="splashScreen">
+        <h1 class="splash-title">🧬 DNA LAB</h1>
+        <p class="splash-subtitle">Create Amazing Dinosaurs with DNA Science!</p>
+        <button class="build-button" onclick="startGame()">
+            🦕 Build a Dinosaur
+        </button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="screen game-screen hidden" id="gameScreen">
+        <div class="lab-header">
+            <h1 class="lab-title">🧪 DNA Laboratory</h1>
+            <p class="instruction">Drag and drop DNA strands into the chamber to create your dinosaur!</p>
+        </div>
+
+        <div class="dna-container">
+            <div class="dna-strand speed" draggable="true" data-type="speed" data-name="Speed DNA">
+                <span style="font-size: 0.8em; color: white; position: absolute; bottom: 5px;">SPEED</span>
+            </div>
+            <div class="dna-strand strength" draggable="true" data-type="strength" data-name="Strength DNA">
+                <span style="font-size: 0.8em; color: white; position: absolute; bottom: 5px;">POWER</span>
+            </div>
+            <div class="dna-strand intelligence" draggable="true" data-type="intelligence" data-name="Intelligence DNA">
+                <span style="font-size: 0.8em; color: white; position: absolute; bottom: 5px;">BRAIN</span>
+            </div>
+            <div class="dna-strand stealth" draggable="true" data-type="stealth" data-name="Stealth DNA">
+                <span style="font-size: 0.8em; color: white; position: absolute; bottom: 5px;">STEALTH</span>
+            </div>
+            <div class="dna-strand size" draggable="true" data-type="size" data-name="Size DNA">
+                <span style="font-size: 0.8em; color: white; position: absolute; bottom: 5px;">SIZE</span>
+            </div>
+        </div>
+
+        <div class="lab-chamber" id="labChamber">
+            <div class="drop-zone" id="dropZone">
+                <p style="opacity: 0.7; font-size: 1.2em;">Drop DNA strands here</p>
+            </div>
+        </div>
+
+        <button class="create-button" id="createButton" onclick="createDinosaur()">
+            ⚡ CREATE DINOSAUR
+        </button>
+    </div>
+
+    <!-- Result Screen -->
+    <div class="screen result-screen hidden" id="resultScreen">
+        <div class="result-container" id="resultContainer">
+            <!-- Result content will be added dynamically -->
+        </div>
+    </div>
+
+    <!-- Loading Animation -->
+    <div class="loading" id="loading">
+        <div class="dna-helix"></div>
+    </div>
+
+    <script>
+        let droppedDNAs = {};
+        let totalDNACount = 0;
+
+        // Dinosaur data
+        const dinosaurs = [
+            {
+                id: 1,
+                name: "Velocirex",
+                description: "A lightning-fast predator with incredible speed and agility! This dinosaur can outrun almost anything in the prehistoric world.",
+                class: "dino-1"
+            },
+            {
+                id: 2,
+                name: "Titanosaurus", 
+                description: "A massive powerhouse with incredible strength! This gentle giant can move mountains with its mighty tail.",
+                class: "dino-2"
+            },
+            {
+                id: 3,
+                name: "Cerebrosaur",
+                description: "The smartest dinosaur ever created! With superior intelligence, it can solve complex problems and outsmart any predator.",
+                class: "dino-3"
+            },
+            {
+                id: 4,
+                name: "Shadowraptor",
+                description: "A master of camouflage and stealth! This mysterious dinosaur can become nearly invisible to hunt its prey.",
+                class: "dino-4"
+            }
+        ];
+
+        function startGame() {
+            document.getElementById('splashScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            setupDragDrop();
+        }
+
+        function setupDragDrop() {
+            const dnaStrands = document.querySelectorAll('.dna-strand');
+            const dropZone = document.getElementById('dropZone');
+
+            dnaStrands.forEach(strand => {
+                strand.addEventListener('dragstart', handleDragStart);
+                strand.addEventListener('dragend', handleDragEnd);
+            });
+
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('drop', handleDrop);
+        }
+
+        function handleDragStart(e) {
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', e.target.dataset.type);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const dnaType = e.dataTransfer.getData('text/plain');
+            
+            if (!droppedDNAs[dnaType]) {
+                droppedDNAs[dnaType] = true;
+                totalDNACount++;
+                
+                // Create dropped DNA visual
+                const droppedDNA = document.createElement('div');
+                droppedDNA.classList.add('dropped-dna');
+                droppedDNA.classList.add(dnaType);
+                droppedDNA.innerHTML = '🧬';
+                
+                // Apply the same gradient as the original
+                const originalStrand = document.querySelector(`[data-type="${dnaType}"]`);
+                const computedStyle = window.getComputedStyle(originalStrand);
+                droppedDNA.style.background = computedStyle.background;
+                
+                e.target.appendChild(droppedDNA);
+                
+                // Remove placeholder text
+                const placeholder = e.target.querySelector('p');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                
+                // Check if we have enough DNA
+                if (totalDNACount >= 4) {
+                    document.getElementById('labChamber').classList.add('ready');
+                    document.getElementById('createButton').classList.add('show');
+                }
+            }
+        }
+
+        function createDinosaur() {
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            
+            setTimeout(() => {
+                // Hide loading
+                document.getElementById('loading').classList.remove('show');
+                
+                // Always succeed - pick random dinosaur (1-4)
+                const randomDinoIndex = Math.floor(Math.random() * 4);
+                const selectedDinosaur = dinosaurs[randomDinoIndex];
+                
+                showResult(selectedDinosaur);
+            }, 3000);
+        }
+
+        function showResult(dinosaur) {
+            const resultContainer = document.getElementById('resultContainer');
+            
+            resultContainer.innerHTML = `
+                <div class="success-message">🎉 SUCCESS! 🎉</div>
+                <div class="dinosaur-name">${dinosaur.name}</div>
+                <div class="dinosaur-image ${dinosaur.class}"></div>
+                <div class="dinosaur-description">${dinosaur.description}</div>
+                <button class="play-again-button" onclick="resetGame()">Create Another Dinosaur</button>
+            `;
+            
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+        }
+
+        function resetGame() {
+            // Reset variables
+            droppedDNAs = {};
+            totalDNACount = 0;
+            
+            // Reset UI
+            document.getElementById('dropZone').innerHTML = '<p style="opacity: 0.7; font-size: 1.2em;">Drop DNA strands here</p>';
+            document.getElementById('labChamber').classList.remove('ready');
+            document.getElementById('createButton').classList.remove('show');
+            
+            // Show splash screen
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('splashScreen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
